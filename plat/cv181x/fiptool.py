@@ -205,7 +205,10 @@ class FIP:
             Entry.make("LOADER_2ND_RESERVED2", 4, int),
             # alios bl
             Entry.make("ALIOS_BOOT_SIZE", 4, int),
-            Entry.make("RESERVED_LAST", 4096 - 16 * 5 - 4, bytes),
+            # Devicetree
+            Entry.make("FDT_LOADADDR", 4, int, 0),
+            Entry.make("FDT_SIZE", 4, int, 0),
+            Entry.make("RESERVED_LAST", 4096 - 16 * 5 - 4 - 4 * 2, bytes),
         ]
     )
 
@@ -215,6 +218,7 @@ class FIP:
             Entry.make("BLCP_2ND", None, bytes),
             Entry.make("MONITOR", None, bytes),
             Entry.make("LOADER_2ND", None, bytes),
+            Entry.make("FDT", None, bytes)
         ]
     )
 
@@ -497,6 +501,14 @@ class FIP:
         self.compress_algo = args.compress
         self.body2["LOADER_2ND"].content = b"\0" * 0x20 + loader_2nd
 
+    def add_fdt(self, args):
+        with open(args.FDT, "rb") as fp:
+            fdt = fp.read()
+
+        logging.debug("fdt=%#x bytes", len(fdt));
+
+        self.body2["FDT"].content = fdt;
+
     def pack_ddr_param(self, fip_bin):
         if not len(self.body2["DDR_PARAM"].content):
             return
@@ -614,6 +626,18 @@ class FIP:
         # Append LOADER_2ND to body2
         return fip_bin + self.body2["LOADER_2ND"].content
 
+    def pack_fdt(self, fip_bin):
+        logging.debug("pack_fdt:")
+
+        fdt = self.body2["FDT"]
+        if not len(fdt.content):
+            return
+
+        self.param2["FDT_LOADADDR"].content = len(fip_bin)
+        self.param2["FDT_SIZE"].content = len(fdt.content)
+
+        return fip_bin + self.pad(fdt.content, IMAGE_ALIGN)
+
     def insert_param1(self, fip_bin, name, value):
         fip_bin = bytearray(fip_bin)
         e = self.param1[name]
@@ -650,6 +674,9 @@ class FIP:
         if len(self.body2["LOADER_2ND"].content):
             fip_bin = self.pack_loader_2nd(fip_bin)
 
+        if len(self.body2["FDT"].content):
+            fip_bin = self.pack_fdt(fip_bin)
+
         # Pack param2_bin
         param2_bin = b"".join((entry.content for entry in self.param2.values()))
         self.param2["PARAM2_CKSUM"].content = self.image_crc(param2_bin[self.param2["PARAM2_CKSUM"].end :])
@@ -685,6 +712,7 @@ METHODS = {
     "BLCP_2ND": FIP.add_blcp_2nd,
     "MONITOR": FIP.add_monitor,
     "LOADER_2ND": FIP.add_loader_2nd,
+    "FDT": FIP.add_fdt
 }
 
 
