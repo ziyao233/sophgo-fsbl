@@ -10,12 +10,10 @@
 
 void sync_cache(void)
 {
-	asm volatile(
-			"icache.iall\n"
-			"sync.i\n"
-			:
-			:
-			: "memory");
+	/* icache.iall */
+	asm (".long 0x100000b");
+	/* sync.i */
+	asm (".long 0x1a0000b");
 }
 
 void cpu_report_exception(unsigned int exception_type)
