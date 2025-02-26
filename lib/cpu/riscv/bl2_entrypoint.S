@@ -57,7 +57,8 @@ bl2_entrypoint_real:
 
   # set mxstatus to init value
   li x3, 0xc0638000
-  csrw mxstatus, x3
+  # csrw mxstatus, x3
+  csrw 0x7c0, x3
 
   # set plic_ctrl = 1
   li x3, 0x701FFFFC # plic_base + 0x1FFFFC
@@ -66,20 +67,26 @@ bl2_entrypoint_real:
 
   # invalid I-cache
   li x3, 0x33
-  csrc mcor, x3
+  # csrc mcor, x3
+  csrc 0x7c2, x3
   li x3, 0x11
-  csrs mcor, x3
+  # csrs mcor, x3
+  csrs 0x7c2, x3
   # enable I-cache
   li x3, 0x1
-  csrs mhcr, x3
+  # csrs mhcr, x3
+  csrs 0x7c1, x3
   # invalid D-cache
   li x3, 0x33
-  csrc mcor, x3
+  # csrc mcor, x3
+  csrc 0x7c2, x3
   li x3, 0x12
-  csrs mcor, x3
+  # csrs mcor, x3
+  csrc 0x7c2, x3
   # enable D-cache
   li x3, 0x2
-  csrs mhcr, x3
+  # csrs mhcr, x3
+  csrs 0x7c1, x3
 
   la sp, __STACKS_END__
 
