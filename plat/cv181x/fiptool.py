@@ -580,7 +580,7 @@ class FIP:
         magic = self.ldr_2nd_hdr["MAGIC"].content
         if magic == LOADER_2ND_MAGIC_ORIG:
             # if image is uncompressed, compress it.
-            if self.compress_algo is None:
+            if self.compress_algo == "none":
                 pass
             elif self.compress_algo == "lzma":
                 self.ldr_2nd_hdr["MAGIC"].content = LOADER_2ND_MAGIC_LZMA
@@ -738,7 +738,7 @@ def parse_args():
 
     pr_gen.add_argument("--MONITOR_RUNADDR", type=auto_int)
 
-    pr_gen.add_argument("--compress", choices=["lzma", "lz4", ""])
+    pr_gen.add_argument("--compress", choices=["lzma", "lz4", "none"])
 
     pr_gen.add_argument("--OLD_FIP", type=str)
     pr_gen.add_argument("--BLOCK_SIZE", type=auto_int)
