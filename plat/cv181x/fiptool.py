@@ -220,15 +220,17 @@ class FIP:
 
     ldr_2nd_hdr = OrderedDict(
         [
-            Entry.make("JUMP0", 4, int),
-            Entry.make("MAGIC", 4, int),
-            Entry.make("CKSUM", 4, int),
-            Entry.make("SIZE", 4, int),
-            Entry.make("RUNADDR", 8, int),
-            Entry.make("RESERVED1", 4, int),
-            Entry.make("RESERVED2", 4, int),
+            Entry.make("JUMP0", 4, int, 0),
+            Entry.make("MAGIC", 4, int, LOADER_2ND_MAGIC_ORIG),
+            Entry.make("CKSUM", 4, int, 0),
+            Entry.make("SIZE", 4, int, 0),
+            Entry.make("RUNADDR", 8, int, 0),
+            Entry.make("RESERVED1", 4, int, 0),
+            Entry.make("RESERVED2", 4, int, 0),
         ]
     )
+
+    loader_2nd_base = 0
 
     alios_bl = OrderedDict(
         [
@@ -490,13 +492,10 @@ class FIP:
 
         logging.debug("loader_2nd=%#x bytes", len(loader_2nd))
 
-        e = self.ldr_2nd_hdr["MAGIC"]
-        magic = loader_2nd[e.addr : e.end]
-        if magic != LOADER_2ND_MAGIC_ORIG:
-            raise ValueError("loader_2nd's magic should be %r, but %r" % (LOADER_2ND_MAGIC_ORIG, magic))
+        self.loader_2nd_base = args.LOADER_2ND_BASE
 
         self.compress_algo = args.compress
-        self.body2["LOADER_2ND"].content = loader_2nd
+        self.body2["LOADER_2ND"].content = b"\0" * 0x20 + loader_2nd
 
     def pack_ddr_param(self, fip_bin):
         if not len(self.body2["DDR_PARAM"].content):
@@ -552,8 +551,8 @@ class FIP:
         return fip_bin + monitor
 
     def _parse_ldr_2nd_hdr(self, image):
-        for e in self.ldr_2nd_hdr.values():
-            e.content = image[e.addr : e.end]
+        self.ldr_2nd_hdr["SIZE"].content = len(image);
+        self.ldr_2nd_hdr["RUNADDR"].content = self.loader_2nd_base;
 
     def _update_ldr_2nd_hdr(self):
         image = self.body2["LOADER_2ND"].content
@@ -744,6 +743,7 @@ def parse_args():
     pr_gen.add_argument("--OLD_FIP", type=str)
     pr_gen.add_argument("--BLOCK_SIZE", type=auto_int)
     pr_gen.add_argument("--BL2_FILL", type=auto_int)
+    pr_gen.add_argument("--LOADER_2ND_BASE", type=auto_int)
 
     pr_gen.add_argument("output", type=str, help="Output filename")
 
