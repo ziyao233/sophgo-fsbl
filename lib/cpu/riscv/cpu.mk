@@ -4,16 +4,15 @@ ASFLAGS +=\
 	$(CPPFLAGS) \
 	-DRISCV \
 	-D__ASSEMBLY__ \
-	-march=rv64imafdcvxthead -mstrict-align \
+	-march=rv64imafdc -mstrict-align \
 	-mcmodel=medany \
 	-mabi=lp64d \
-	-ffreestanding  \
-	-Wa,--fatal-warnings
+	-ffreestanding
 
 TF_CFLAGS += \
 	$(CPPFLAGS) \
 	-DRISCV \
-	-march=rv64imafdcvxthead \
+	-march=rv64imafdc \
 	-mcmodel=medany \
 	-mabi=lp64d \
 	-ffreestanding -fno-builtin -Wall -std=gnu99 \
@@ -21,7 +20,7 @@ TF_CFLAGS += \
 	-fno-delete-null-pointer-checks
 
 TF_LDFLAGS += \
-	--fatal-warnings -Os \
+	-Os \
 	--gc-sections \
 	${TF_LDFLAGS_aarch64}
 
