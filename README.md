@@ -78,7 +78,7 @@ whose GCC is called `riscv64-unknown-linux-musl-gcc`,
 |     Board Name    |     CHIP_ARCH    |     DDR_CFG     |  Status   |
 --------------------|------------------|-----------------|-----------|
 |  Milk-V Duo-256M  |       cv181x     |  ddr3_1866_x16  |  tested   |
-|  Milk-V Duo       |       cv180x     |  ddr2_1333_x16  |  UNTESTED |
+|  Milk-V Duo       |       cv180x     |  ddr2_1333_x16  |  tested   |
 
 ## Packing FSBL and other images together
 
@@ -112,28 +112,29 @@ should boot.
 		DDR_CFG=ddr3_1866_x16	\
 		BOOT_CPU=riscv
 
-	# Build OpenSBI
-	# git clone https://github.com/riscv-software-src/opensbi.git
-	$ make CROSS_COMPILE=riscv64-unknown-linux-musl \
-		PLATFORM=generic
-
 	# Build Mainline U-Boot
 	# git clone https://github.com/u-boot/u-boot.git
 	$ make CROSS_COMPILE=riscv64-unknown-linux-musl- \
 		ARCH=riscv	\
 		milkv_duo_defconfig u-boot-dtb.bin u-boot.dtb
 
+	# Build OpenSBI
+	# git clone https://github.com/riscv-software-src/opensbi.git
+	$ make CROSS_COMPILE=riscv64-unknown-linux-musl \
+		PLATFORM=generic FW_FDT_PATH=u-boot/u-boot.dtb
+
 	# Generate the image
 	# In sophgo-fsbl
 	$ CHIP_ARCH=cv181x \
 	  OPENSBI=opensbi/build/platform/generic/firmware/fw_dynamic.bin \
 	  NEXTLOADER=u-boot/u-boot.bin					\
-	  FDT=u-boot.dtb						\
 	  ./fip.sh
 
 	# The following doesn't work with mainline U-Boot (v2025.04-rc2)
 	# The milkv_duo port doesn't respect the devicetree passed by previous
 	# firwmare (OpenSBI), have to bundle them together.
+	# Unless you apply https://lore.kernel.org/u-boot/20250227144734.61458-1-ziyao@disroot.org/,
+	# to U-Boot, and you could avoid FW_FDT_PATH when building OpenSBI
 	$ CHIP_ARCH=cv181x \
 	  OPENSBI=opensbi/build/platform/generic/firmware/fw_dynamic.bin \
 	  NEXTLOADER=u-boot/u-boot-nodtb.bin				\
@@ -143,6 +144,6 @@ should boot.
 
 ## TODOs
 
-- Test with Milk-V Duo (64MiB DRAM)
+- ~~Test with Milk-V Duo (64MiB DRAM)~~
 - Dynamically detecting SoC and choosing appropriate devicetree
 - Ultimately, upstream it as U-Boot SPL!
