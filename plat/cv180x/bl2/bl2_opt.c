@@ -502,6 +502,35 @@ void jump_to_warmboot_entry(void)
 	}
 }
 #endif
+
+static int load_fdt(int retry)
+{
+	uint32_t loadaddr = fip_param2.fdt_loadaddr;
+	uint32_t size = fip_param2.fdt_size;
+
+	if (!size) {
+		NOTICE("No fdt\n");
+		return 0;
+	}
+
+	NOTICE("fdt: loadaddr = 0x%x, size = 0x%x (%d) bytes\n",
+	       loadaddr, size, size);
+
+	void *fdt_buf = (void *)OPENSBI_FDT_ADDR;
+
+	int ret = p_rom_api_load_image(fdt_buf, loadaddr, size, retry);
+	if (ret < 0) {
+		ERROR("failed to load fdt (%d)\n", ret);
+		return ret;
+	}
+
+	flush_dcache_range(OPENSBI_FDT_ADDR, size);
+
+	NOTICE("fdt loaded\n");
+
+	return 0;
+}
+
 int load_rest(void)
 {
 	int retry = 0;
@@ -523,6 +552,9 @@ retry_from_flash:
 			continue;
 
 		if (load_loader_2nd(retry, &loader_2nd_entry) < 0)
+			continue;
+
+		if (load_fdt(retry) < 0)
 			continue;
 
 		break;
