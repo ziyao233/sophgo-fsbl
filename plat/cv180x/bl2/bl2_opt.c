@@ -388,11 +388,16 @@ int load_loader_2nd(int retry, uint64_t *loader_2nd_entry)
 		reading_size = dst_size;
 	}
 
+	memmove((void *)loader_2nd_header->runaddr,
+		(void *)(loader_2nd_header->runaddr +
+			 sizeof(struct loader_2nd_header)),
+		reading_size - sizeof(struct loader_2nd_header));
+
 	flush_dcache_range(loader_2nd_header->runaddr, reading_size);
 	time_records->fsbl_decomp_end = read_time_ms();
 	NOTICE("Loader_2nd loaded.\n");
 
-	*loader_2nd_entry = loader_2nd_header->runaddr + sizeof(struct loader_2nd_header);
+	*loader_2nd_entry = loader_2nd_header->runaddr;
 
 	return 0;
 }
